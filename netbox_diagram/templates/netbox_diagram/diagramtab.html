@@ -1,0 +1,14 @@
+{% extends 'generic/object.html' %}
+{% load render_table from django_tables2 %}
+{% load buttons %}
+{% load static %}
+{% load helpers %}
+{% load plugins %}
+
+{% block content %}
+    <div class="row">
+        <div class="col">
+            {% include 'netbox_diagram/panels/diagrams.html' %}
+        </div>
+    </div>
+{% endblock %}

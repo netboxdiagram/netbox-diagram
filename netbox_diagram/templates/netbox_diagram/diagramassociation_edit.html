@@ -1,0 +1,20 @@
+{% extends 'generic/object_edit.html' %}
+{% load static %}
+{% load form_helpers %}
+{% load helpers %}
+
+
+{% block form %}
+    <div class="field-group my-5">
+        {% if form.initial.device %}
+            {% render_field form.device %}
+        {% endif %}
+        {% if form.initial.circuit %}
+            {% render_field form.circuit %}
+        {% endif %}
+        {% render_field form.diagram %}
+        {% render_field form.coord_x %}
+        {% render_field form.coord_y %}
+        {% render_field form.tags %}
+    </div>
+{% endblock %}

@@ -1,0 +1,117 @@
+name: CI
+on:
+  push:
+    branches:
+      - "develop"
+      - "main"
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - "main"
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}-${{ github.actor }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Check Build
+    runs-on: ubuntu-latest
+    env:
+      NETBOX_CONFIGURATION: netbox.configuration_diagram
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: netbox
+          POSTGRES_PASSWORD: netbox
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Echo Github Variables
+        run: |
+          echo "${{ github.event_name }}"
+          echo "${{ github.action }}"
+          echo "${{ github.action_path }}"
+          echo "${{ github.action_ref }}"
+
+      - name: Check out NetBox
+        uses: actions/checkout@v4
+        with:
+          repository: "netbox-community/netbox"
+          ref: "main"
+          path: "netbox"
+
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          path: "netbox-diagram"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies & set up configuration
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r netbox/requirements.txt
+          pip install coverage tblib ruff
+          pip install -e netbox-diagram
+
+      - name: Copy configuration
+        run: |
+          cp netbox-diagram/contrib/configuration_diagram.py netbox/netbox/netbox/configuration_diagram.py
+
+      - name: Collect static files
+        run: python netbox/netbox/manage.py collectstatic --no-input
+
+      - name: Check for missing migrations
+        run: python netbox/netbox/manage.py makemigrations --check
+
+      - name: Check code formatting with Ruff
+        run: ruff format --check netbox-diagram/netbox_diagram
+
+      - name: Run tests
+        run: coverage run --source="netbox-diagram/netbox_diagram/" netbox/netbox/manage.py test netbox-diagram/netbox_diagram/
+
+      - name: Show coverage report
+        run: coverage report --skip-covered --omit '*/migrations/*,*/tests/*' --fail-under=85
+
+      - name: Extract coverage
+        id: extract_coverage
+        run: |
+          coverage_report=$(coverage report --omit '*/migrations/*,*/tests/*' | tail -1)
+          echo "Coverage report line: $coverage_report"
+          coverage_percent=$(echo $coverage_report | awk '{print $NF}' | sed 's/%//')
+          echo "Extracted coverage: $coverage_percent"
+          echo "cov=$coverage_percent" >> $GITHUB_OUTPUT
+
+      - name: Create Coverage Badge
+        if: github.ref == 'refs/heads/main'
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ secrets.GIST_ID }}
+          filename: cov.json
+          label: Coverage
+          message: "${{ steps.extract_coverage.outputs.cov }}%"
+          valColorRange: ${{ steps.extract_coverage.outputs.cov }}
+          maxColorRange: 90
+          minColorRange: 50

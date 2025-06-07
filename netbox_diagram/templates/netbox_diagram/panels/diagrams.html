@@ -1,0 +1,49 @@
+<div class="card">
+    <h5 class="card-header">
+    Diagrams
+    {% if perms.netbox_diagram.add_diagramassociation %}
+    <div class="card-actions">
+        <a href="{% url 'plugins:netbox_diagram:diagramassociation_add' %}?diagram={{ object.pk }}&return_url={% url 'plugins:netbox_diagram:diagram' pk=object.id %}"  class="btn btn-ghost-primary btn-sm">
+        <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add
+        </a>
+    </div>
+    {% endif %}
+    </h5>
+    <table class="table table-hover attr-table">
+        <thead>
+        <tr>
+            <th scope="col">Diagram</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% with assignment_list=object.get_diagram_associations %}
+            {% for assignment in assignment_list %}
+            <tr>
+                <td>{{ assignment.diagram|linkify }}</td>
+                <td class="noprint text-end text-nowrap">
+                    <span class="btn-group dropdown">
+                        {% if perms.netbox_diagram.change_diagramassociation %}
+                        <a class="btn btn-warning" href="{% url 'plugins:netbox_diagram:diagramassociation_edit' pk=assignment.pk %}?return_url={{ request.path|urlencode }}" type="button">
+                        {% else %}
+                        <a class="btn btn-warning" type="button"></a>
+                        {% endif %}
+                            <i class="mdi mdi-pencil"></i>
+                        </a>
+                        <a class="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown" style="padding-left: 2px">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                        {% if perms.netbox_diagram.delete_diagramassociation %}
+                            <li><a class="dropdown-item" href="{% url 'plugins:netbox_diagram:diagramassociation_delete' pk=assignment.pk %}?return_url={{ request.path|urlencode }}"><i class="mdi mdi-trash-can-outline"></i> Delete</a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url 'plugins:netbox_diagram:diagramassociation_changelog' pk=assignment.pk %}"><i class="mdi mdi-history"></i> Changelog</a></li>
+                        </ul>
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        {% endwith %}
+        </tbody>
+    </table>
+</div>

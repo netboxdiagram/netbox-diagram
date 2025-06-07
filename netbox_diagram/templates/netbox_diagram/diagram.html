@@ -1,0 +1,748 @@
+{% extends template_extends|default:'generic/object.html' %}
+{% load buttons %}
+{% load custom_links %}
+{% load helpers %}
+{% load perms %}
+{% load static %}
+{% load plugins %}
+
+{% block head %}
+  <link rel="stylesheet" href="{% static 'netbox_diagram/css/diagram.css' %}">
+{% endblock %}
+
+{% block buttons %}
+<a class="btn btn-outline-danger" href="{{ return_url }}">Cancel</a>
+<button type="submit" name="_create" class="btn btn-primary">
+Create
+</button>
+{% endblock buttons %}
+
+{% block tabs %}
+  <ul class="nav nav-tabs" id="tabswrapper">
+    {% block tab_items %}
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="diagram-tab" data-bs-toggle="tab" data-bs-target="#diagram" type="button" role="tab" aria-controls="diagram-form" aria-selected="true">
+          Diagram
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details-form" aria-selected="true">
+          Details
+        </button>
+      </li>
+    {% endblock tab_items %}
+  </ul>
+{% endblock tabs %}
+
+{% block content %}
+  <div class="tab-pane show active" id="diagram" role="tabpanel" aria-labelledby="diagram-tab">
+    <div class="panel-body">
+      <div>
+        <button id="saveBtn">Save</button>
+        <button id="exportBtn">Export</button>
+        <button id="toggleGridBtn">Grid: OFF</button>
+        <button id="toggleLabelsBtn">Link Labels: ON</button>
+        <button id="toggleSnapBtn">Snap: OFF</button>
+        <button id="zoomResetBtn">Zoom Reset</button>
+        <button id="zoomFitBtn">Zoom to Fit</button>
+      </div>
+      <div id="mynetwork" style="width: 100%; height: calc(100vh - 150px); overflow: hidden;"></div>
+    </div>
+  </div>
+
+  <div class="tab-pane show" id="details" role="tabpanel" aria-labelledby="details-tab">
+    <div class="row">
+      <div class="col col-md-6">
+        <div class="card">
+          <h5 class="card-header">Diagram</h5>
+          <table class="table table-hover attr-table">
+            <tr><td>Name</td><td>{{ object.name }}</td></tr>
+            <tr><td>Description</td><td>{{ object.description }}</td></tr>
+          </table>
+        </div>
+        {% plugin_left_page object %}
+        {% include 'inc/panels/tags.html' %}
+      </div>
+
+      <div class="col col-md-6">
+        <div class="card">
+          <h5 class="card-header">
+            Associated Objects
+            {% if perms.netbox_diagram.add_diagramassociation %}
+            <div class="card-actions">
+              <a href="{% url 'plugins:netbox_diagram:diagramassociation_add' %}?diagram={{ object.pk }}&return_url={% url 'plugins:netbox_diagram:diagram' pk=object.id %}"  class="btn btn-ghost-primary btn-sm">
+                <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add
+              </a>
+            </div>
+            {% endif %}
+          </h5>
+          <table class="table table-hover attr-table">
+            <thead>
+              <tr>
+                <th scope="col">Object</th>
+                <th scope="col">X</th>
+                <th scope="col">Y</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for obj in object.diagramassociation_set.all %}
+                <tr>
+                  <td>{{ obj.assigned_object|linkify }}</td>
+                  <td>{{ obj.coord_x }}</td>
+                  <td>{{ obj.coord_y }}</td>
+                  <td class="noprint text-end text-nowrap">
+                    <span class="btn-group dropdown">
+                      {% if perms.netbox_diagram.change_diagramassociation %}
+                        <a class="btn btn-warning" href="{% url 'plugins:netbox_diagram:diagramassociation_edit' pk=obj.pk %}?return_url={% url 'plugins:netbox_diagram:diagram' pk=object.id %}" type="button">
+                          <i class="mdi mdi-pencil"></i>
+                        </a>
+                      {% else %}
+                        <a class="btn btn-warning" type="button"></a>
+                      {% endif %}
+                      <a class="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown" style="padding-left: 2px">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                      </a>
+                      <ul class="dropdown-menu">
+                        {% if perms.netbox_diagram.delete_diagramassociation %}
+                          <li><a class="dropdown-item" href="{% url 'plugins:netbox_diagram:diagramassociation_delete' pk=obj.pk %}?return_url={% url 'plugins:netbox_diagram:diagram' pk=object.id %}"><i class="mdi mdi-trash-can-outline"></i> Delete</a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url 'plugins:netbox_diagram:diagramassociation_changelog' pk=obj.pk %}"><i class="mdi mdi-history"></i> Changelog</a></li>
+                      </ul>
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% include 'inc/panels/custom_fields.html' %}
+        {% include 'inc/panels/comments.html' %}
+        {% plugin_right_page object %}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col col-md-12">
+        {% plugin_full_width_page object %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascript %}
+<script src="{% static 'netbox_diagram/js/d3.v7.min.js' %}" defer></script>
+<script type="module">
+  const container = document.getElementById("mynetwork");
+  const labelBaseOffset = 8;
+  const labelSpacing = 10;
+
+  let width = container.clientWidth;
+  let height = container.clientHeight;
+  const gridSize = 20;
+  
+  const svg = d3.create("svg")
+    .attr("width", "100%")
+    .attr("height", "100%")
+    .attr("viewBox", `0 0 ${width} ${height}`)  // sets internal coordinate system
+    .style("display", "block"); // removes inline scrollbars
+
+  svg.call(
+    d3.zoom()
+      .scaleExtent([0.1, 5])
+      .on("zoom", (event) => {
+        zoomGroup.attr("transform", event.transform);
+        if (gridVisible) {
+          updateGrid(event.transform);
+        }
+      })      
+      .filter(event => !event.ctrlKey || event.type === "wheel") // avoid accidental zoom
+  );
+
+  const zoom = d3.zoom()
+  .scaleExtent([0.1, 5])
+  .on("zoom", (event) => {
+    zoomGroup.attr("transform", event.transform);
+  });
+
+  svg.call(zoom);
+
+  const zoomGroup = svg.append("g")  // <-- this is the group we'll transform
+      .attr("class", "zoom-group");
+
+  // move everything into zoomGroup
+  const gridGroup = zoomGroup.append("g").attr("class", "grid");
+
+  let nodes = [];
+  let edges = [];
+  let edge, label, node, edgeLabel;
+  let gridVisible = false;
+  let snapEnabled = false;
+  let edgeLabelsVisible = true; // Track link label visibility
+
+
+  function snapToGrid(x, y) {
+    return {
+      x: Math.round(x / gridSize) * gridSize,
+      y: Math.round(y / gridSize) * gridSize
+    };
+  }
+
+  function toggleGrid() {
+    gridVisible = !gridVisible;
+    if (gridVisible) {
+      gridGroup.style("display", null);
+      updateGrid(d3.zoomTransform(svg.node())); // initial draw
+      document.getElementById('toggleGridBtn').textContent = 'Grid: ON';
+    } else {
+      gridGroup.style("display", "none");
+      document.getElementById('toggleGridBtn').textContent = 'Grid: OFF';
+    }
+  }
+
+  function toggleSnap() {
+    snapEnabled = !snapEnabled;
+    const snapStatusText = snapEnabled ? 'Snap: ON' : 'Snap: OFF';
+    document.getElementById('toggleSnapBtn').textContent = snapStatusText;
+  }
+
+  function toggleEdgeLabels() {
+    edgeLabelsVisible = !edgeLabelsVisible;
+    edgeLabel.style("display", edgeLabelsVisible ? null : "none");
+
+    const edgeLabelText = edgeLabelsVisible ? 'Link Labels: ON' : 'Link Labels: OFF';
+    document.getElementById('toggleLabelsBtn').textContent = edgeLabelText;
+
+  }
+
+  async function loadDiagramData() {
+    try {
+      const response = await fetch("{% url 'plugins:netbox_diagram:diagram_data' pk=object.pk %}");
+      if (!response.ok) throw new Error('Failed to load diagram data');
+
+      const data = await response.json();
+      nodes = data.nodes;
+      edges = data.edges;
+
+      edges.forEach(edge => {
+        edge.source = nodes.find(n => n.name === edge.source);
+        edge.target = nodes.find(n => n.name === edge.target);
+      });
+
+      assignEdgeOffsets(edges);
+      renderDiagram(nodes, edges);
+      applyThemeStyles();
+    } catch (err) {
+      console.error("Error loading diagram data:", err);
+    }
+  }
+
+  function renderDiagram(nodes, edges) {
+    edge = zoomGroup.selectAll("line.edges")
+    .data(edges)
+    .join("line")
+      .attr("class", "link")
+      .attr("stroke", "#999")
+      .attr("stroke-width", 2)
+      .attr("x1", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const offsetX = (dy / len) * d.offset;  // Perpendicular
+        return d.source.x + offsetX;
+      })
+      .attr("y1", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const offsetY = -(dx / len) * d.offset;  // Perpendicular
+        return d.source.y + offsetY;
+      })
+      .attr("x2", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const offsetX = (dy / len) * d.offset;
+        return d.target.x + offsetX;
+      })
+      .attr("y2", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const offsetY = -(dx / len) * d.offset;
+        return d.target.y + offsetY;
+      });
+
+    // Render edge descriptions
+    edgeLabel = zoomGroup.selectAll("text.edgeLabel")
+    .data(edges)
+    .join("text")
+      .attr("class", "edgeLabel")
+      .attr("text-anchor", "middle")
+      .attr("x", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const normX = dx / len;
+        const normY = dy / len;
+      
+        const midX = (d.source.x + d.target.x) / 2;
+        const midY = (d.source.y + d.target.y) / 2;
+      
+        // Perpendicular offset to float the label
+        const labelOffset = labelBaseOffset + Math.abs(d.offsetIndex) * labelSpacing;
+        const perpX = -normY * labelOffset * Math.sign(d.offsetIndex || 1);
+
+        return midX + perpX;
+      })
+      .attr("y", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const normX = dx / len;
+        const normY = dy / len;
+      
+        const midX = (d.source.x + d.target.x) / 2;
+        const midY = (d.source.y + d.target.y) / 2;
+        const labelOffset = labelBaseOffset + Math.abs(d.offsetIndex) * labelSpacing;
+        const perpY = normX * labelOffset * Math.sign(d.offsetIndex || 1);
+        return midY + perpY;
+      })
+      .text(d => d.description || "")
+      .attr("font-size", "12px")
+      .attr("fill", "#333")
+      .attr("transform", function(d) {
+        const x = d3.select(this).attr("x");
+        const y = d3.select(this).attr("y");
+      
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      
+        // Flip text if it's upside-down
+        if (angle > 90 || angle < -90) {
+          angle += 180;
+        }
+      
+        return `rotate(${angle}, ${x}, ${y})`;
+      })
+      .attr("dominant-baseline", "middle");
+
+    label = zoomGroup.selectAll("text.label")
+      .data(nodes)
+      .join("text")
+        .attr("class", "label")
+        .attr("x", d => d.x)
+        .attr("y", d => d.y - 20)
+        .text(d => d.name);
+
+    node = zoomGroup.selectAll("circle.node")
+      .data(nodes)
+      .join("circle")
+        .attr("class", "node")
+        .attr("r", 15)
+        .attr("fill", "#69b3a2")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y);
+
+    node.call(dragBehavior);
+    document.getElementById("mynetwork").appendChild(svg.node());
+  }
+
+  const dragBehavior = d3.drag()
+    .on("start", function(event, d) {
+      d3.select(this).raise().attr("stroke", "black");
+    })
+    .on("drag", function(event, d) {
+      let newX = event.x;
+      let newY = event.y;
+
+      if (snapEnabled) {
+        const snapped = snapToGrid(newX, newY);
+        newX = snapped.x;
+        newY = snapped.y;
+      }
+
+      d.x = newX;
+      d.y = newY;
+
+      d3.select(this)
+        .attr("cx", d.x)
+        .attr("cy", d.y);
+
+      label
+        .filter(l => l === d)
+        .attr("x", d.x)
+        .attr("y", d => d.y - 20);
+
+      edge
+        .filter(l => l.source === d || l.target === d)
+        .attr("x1", l => {
+          const dx = l.target.x - l.source.x;
+          const dy = l.target.y - l.source.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const offsetX = (dy / len) * l.offset;
+          return l.source.x + offsetX;
+        })
+        .attr("y1", l => {
+          const dx = l.target.x - l.source.x;
+          const dy = l.target.y - l.source.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const offsetY = -(dx / len) * l.offset;
+          return l.source.y + offsetY;
+        })
+        .attr("x2", l => {
+          const dx = l.target.x - l.source.x;
+          const dy = l.target.y - l.source.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const offsetX = (dy / len) * l.offset;
+          return l.target.x + offsetX;
+        })
+        .attr("y2", l => {
+          const dx = l.target.x - l.source.x;
+          const dy = l.target.y - l.source.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const offsetY = -(dx / len) * l.offset;
+          return l.target.y + offsetY;
+        });
+
+      edgeLabel
+        .filter(l => l.source === d || l.target === d)
+        .each(function(l) {
+          const dx = l.target.x - l.source.x;
+          const dy = l.target.y - l.source.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+      
+          const normX = dx / len;
+          const normY = dy / len;
+          
+          const midX = (l.source.x + l.target.x) / 2;
+          const midY = (l.source.y + l.target.y) / 2;
+          
+          const labelOffset = labelBaseOffset + Math.abs(l.offsetIndex) * 10;
+          const offsetX = -normY * labelOffset * Math.sign(l.offsetIndex || 1);
+          const offsetY = normX * labelOffset * Math.sign(l.offsetIndex || 1);
+          
+          const x = midX + offsetX;
+          const y = midY + offsetY;
+          
+
+          let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+          if (angle > 90 || angle < -90) {
+            angle += 180;
+          }
+      
+          d3.select(this)
+            .attr("x", x)
+            .attr("y", y)
+            .attr("transform", `rotate(${angle}, ${x}, ${y})`);
+        });
+      
+    })
+    .on("end", function(event, d) {
+      d3.select(this).attr("stroke", null);
+    });
+
+  document.getElementById('toggleGridBtn').addEventListener('click', toggleGrid);
+  document.getElementById('toggleSnapBtn').addEventListener('click', toggleSnap);
+  document.getElementById('toggleLabelsBtn').addEventListener('click', toggleEdgeLabels);
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const config = nodes.map(n => ({
+      ...n,
+      x: Math.round(n.x),
+      y: Math.round(n.y)
+    }));
+
+    try {
+      const response = await fetch("{% url 'plugins:netbox_diagram:diagram_data' pk=object.pk %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(config)
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+    } catch (error) {
+      console.error('💥 Failed to save positions:', error);
+    }
+  });
+  document.getElementById("zoomResetBtn").addEventListener("click", () => {
+    svg.transition().duration(500)
+      .call(zoom.transform, d3.zoomIdentity); // Reset to identity (scale=1, translate=0)
+  });
+
+  document.getElementById("zoomFitBtn").addEventListener("click", () => {
+    if (!nodes.length) return;
+  
+    const padding = 40;
+  
+    const xValues = nodes.map(n => n.x);
+    const yValues = nodes.map(n => n.y);
+    const minX = Math.min(...xValues);
+    const maxX = Math.max(...xValues);
+    const minY = Math.min(...yValues);
+    const maxY = Math.max(...yValues);
+  
+    const contentWidth = maxX - minX + padding * 2;
+    const contentHeight = maxY - minY + padding * 2;
+  
+    const scale = Math.min(width / contentWidth, height / contentHeight);
+    const translateX = (width - (maxX + minX) * scale) / 2;
+    const translateY = (height - (maxY + minY) * scale) / 2;
+  
+    svg.transition().duration(500).call(
+      zoom.transform,
+      d3.zoomIdentity
+        .translate(translateX, translateY)
+        .scale(scale)
+    );
+  });
+
+  window.addEventListener("resize", () => {
+    width = container.clientWidth;
+    height = container.clientHeight;
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
+  });
+  
+  function updateGrid(transform) {
+    const scale = transform.k;
+    const translateX = transform.x;
+    const translateY = transform.y;
+  
+    const gridSpacing = gridSize * scale;
+  
+    // Remove old lines
+    gridGroup.selectAll("line").remove();
+  
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+  
+    const drawMargin = 2000; // bigger than viewport
+
+    const startX = Math.floor((-translateX - drawMargin) / gridSpacing) * gridSpacing;
+    const endX = Math.ceil((-translateX + containerWidth + drawMargin) / gridSpacing) * gridSpacing;
+    
+    const startY = Math.floor((-translateY - drawMargin) / gridSpacing) * gridSpacing;
+    const endY = Math.ceil((-translateY + containerHeight + drawMargin) / gridSpacing) * gridSpacing;
+    
+  
+    const numVLines = Math.ceil(containerWidth / gridSpacing) + 2;
+    const numHLines = Math.ceil(containerHeight / gridSpacing) + 2;
+  
+    for (let x = startX; x <= endX; x += gridSpacing) {
+      gridGroup.append("line")
+        .attr("x1", x)
+        .attr("y1", startY)
+        .attr("x2", x)
+        .attr("y2", endY)
+        .attr("stroke", "#ddd")
+        .attr("stroke-width", 1 / scale);
+    }
+    
+    for (let y = startY; y <= endY; y += gridSpacing) {
+      gridGroup.append("line")
+        .attr("x1", startX)
+        .attr("y1", y)
+        .attr("x2", endX)
+        .attr("y2", y)
+        .attr("stroke", "#ddd")
+        .attr("stroke-width", 1 / scale);
+    }
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const nodeMap = {};
+    let idCounter = 1;
+    const nodeCells = [];
+    const edgeCells = [];
+
+    // Create node shapes
+    nodes.forEach(node => {
+      const id = "n" + idCounter++;
+      const key = String(node.name).trim().toLowerCase();
+      nodeMap[key] = id;
+    
+      nodeCells.push(`
+        <mxCell id="${id}" value="${node.name}" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="${node.x}" y="${node.y}" width="100" height="60" as="geometry" />
+        </mxCell>
+      `);
+    });
+
+    // Create edge lines
+    edges.forEach(edge => {
+      const sourceKey = String(edge.source.name || edge.source).trim().toLowerCase();
+      const targetKey = String(edge.target.name || edge.target).trim().toLowerCase();
+      const sourceId = nodeMap[sourceKey];
+      const targetId = nodeMap[targetKey];
+    
+      if (sourceId && targetId) {
+        const edgeId = "e" + idCounter++;
+        const label = edge.description || "";
+    
+        const sx = edge.source.x;
+        const sy = edge.source.y;
+        const tx = edge.target.x;
+        const ty = edge.target.y;
+    
+        const dx = tx - sx;
+        const dy = ty - sy;
+    
+        // Determine dominant direction
+        const horizontal = Math.abs(dx) > Math.abs(dy);
+    
+        // Offset for parallel edges
+        const index = edge.offsetIndex || 0;
+        const spacing = 0.1; // offset step in normalized units
+        const offset = index * spacing;
+    
+        let exitX = 0.5, exitY = 0.5, entryX = 0.5, entryY = 0.5;
+    
+        if (horizontal) {
+          // Edge goes left to right or right to left
+          if (dx > 0) {
+            exitX = 1;
+            entryX = 0;
+          } else {
+            exitX = 0;
+            entryX = 1;
+          }
+          // Slight vertical offset for multi-links
+          exitY = entryY = Math.min(Math.max(0.5 + offset, 0.1), 0.9);
+        } else {
+          // Edge goes top to bottom or vice versa
+          if (dy > 0) {
+            exitY = 1;
+            entryY = 0;
+          } else {
+            exitY = 0;
+            entryY = 1;
+          }
+          // Slight horizontal offset for multi-links
+          exitX = entryX = Math.min(Math.max(0.5 + offset, 0.1), 0.9);
+        }
+    
+        const style = `
+          endArrow=none;
+          html=1;
+          edgeStyle=none;
+          rotateLabel=1;
+          horizontal=0;
+          exitX=${exitX};
+          exitY=${exitY};
+          entryX=${entryX};
+          entryY=${entryY};
+        `.trim().replace(/\s+/g, '');
+    
+        edgeCells.push(`
+          <mxCell id="${edgeId}" value="${label}" style="${style}" edge="1" parent="1" source="${sourceId}" target="${targetId}">
+            <mxGeometry relative="1" as="geometry" />
+          </mxCell>
+        `);
+      } else {
+        console.warn("Missing source/target for edge:", edge);
+      }
+    });
+    
+
+    const allCells = nodeCells.concat(edgeCells).join("\n");
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <mxfile host="app.diagrams.net">
+      <diagram name="Page-1" id="some-id">
+        <mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1"
+                      tooltips="1" connect="1" arrows="1" fold="1" page="1"
+                      pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+          <root>
+            <mxCell id="0" />
+            <mxCell id="1" parent="0" />
+            ${allCells}
+          </root>
+        </mxGraphModel>
+      </diagram>
+      </mxfile>`;
+
+    const blob = new Blob([xml], { type: "application/xml" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "{{ object.name }}.drawio";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  function assignEdgeOffsets(edges) {
+    const edgeGroups = {};
+  
+    edges.forEach(edge => {
+      const key = [edge.source.name || edge.source, edge.target.name || edge.target].sort().join("||");
+  
+      if (!edgeGroups[key]) {
+        edgeGroups[key] = [];
+      }
+  
+      edgeGroups[key].push(edge);
+    });
+  
+    Object.values(edgeGroups).forEach(group => {
+      const count = group.length;
+      const mid = (count - 1) / 2;
+      group.forEach((edge, i) => {
+        edge.offset = (i - mid) * 10;  // 10 pixels spacing
+        edge.offsetIndex = i - mid; // e.g. -1, 0, 1 for 3 links
+      });
+    });
+  }
+
+  function getCurrentTheme() {
+      return document.body.getAttribute("data-bs-theme") || "light";
+  }
+
+  function applyThemeStyles() {
+    const theme = getCurrentTheme();
+  
+    const nodeFill = theme === 'dark' ? '#4fd1c5' : '#69b3a2';
+    const textColor = theme === 'dark' ? '#e5e5e5' : '#333';
+    const edgeColor = theme === 'dark' ? '#aaa' : '#999';
+  
+    if (node) node.attr("fill", nodeFill);
+    if (label) label.attr("fill", textColor);
+    if (edge) edge.attr("stroke", edgeColor);
+    if (edgeLabel) edgeLabel.attr("fill", textColor);
+  }
+
+  const observerTarget = document.body;
+  const observer = new MutationObserver(() => {
+    applyThemeStyles();
+  });
+  
+  observer.observe(observerTarget, {
+    attributes: true,
+    attributeFilter: ['data-bs-theme']
+  });
+  
+
+  loadDiagramData();
+</script>
+
+
+{% endblock javascript %}

@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox_diagram"
+version = "0.0.1"
+authors = [
+  { name="Netbox Diagram", email="netboxdiagram@gmail.com" },
+]
+description = "Diagrams based on Netbox Devices and Circuits"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+keywords = ["netbox", "netbox-plugin", "diagram"]
+
+[project.urls]
+"Homepage" = "https://github.com/netboxdiagram/netbox_diagram"
+"Bug Tracker" = "https://github.com/netboxdiagram/netbox_diagram/issues/"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["netbox_diagram*"]
+
+[tool.ruff]
+exclude = [
+    "netbox_diagram/migrations",
+]
+
+[tool.ruff.lint]
+extend-select = ["E4", "E7", "E9", "F", "W", "C", "I"]
+ignore = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+known-local-folder = ["netbox_diagram"]
+known-first-party = [
+    "netbox",
+    "core",
+    "dcim",
+    "extras",
+    "tenancy",
+    "users",
+    "utilities",
+]
+
+[tool.ruff.format]
+quote-style = "single"

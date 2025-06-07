@@ -9,27 +9,27 @@ from utilities.api import get_serializer_for_model
 from netbox_diagram.models import Diagram, DiagramAssociation
 
 __all__ = (
-    "DiagramSerializer",
-    "DiagramAssociationSerializer",
+    'DiagramSerializer',
+    'DiagramAssociationSerializer',
 )
 
 
 class DiagramSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:netbox_diagram-api:diagram-detail")
+    url = serializers.HyperlinkedIdentityField(view_name='plugins-api:netbox_diagram-api:diagram-detail')
 
     class Meta:
         model = Diagram
         fields = (
-            "url",
-            "id",
-            "display",
-            "name",
-            "description",
+            'url',
+            'id',
+            'display',
+            'name',
+            'description',
         )
 
 
 class DiagramAssociationSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:netbox_diagram-api:diagramassociation-detail")
+    url = serializers.HyperlinkedIdentityField(view_name='plugins-api:netbox_diagram-api:diagramassociation-detail')
     # diagram = serializers.HyperlinkedIdentityField(view_name="plugins-api:netbox_diagram-api:diagram-detail")
     assigned_object_type = ContentTypeField(queryset=ContentType.objects.all())
     assigned_object = serializers.SerializerMethodField(read_only=True)
@@ -37,15 +37,15 @@ class DiagramAssociationSerializer(NetBoxModelSerializer):
     class Meta:
         model = DiagramAssociation
         fields = (
-            "url",
-            "id",
-            "display",
-            "diagram",
-            "assigned_object_type",
-            "assigned_object_id",
-            "assigned_object",
-            "coord_x",
-            "coord_y",
+            'url',
+            'id',
+            'display',
+            'diagram',
+            'assigned_object_type',
+            'assigned_object_id',
+            'assigned_object',
+            'coord_x',
+            'coord_y',
         )
 
     @extend_schema_field(OpenApiTypes.STR)
@@ -54,5 +54,5 @@ class DiagramAssociationSerializer(NetBoxModelSerializer):
             return {}
 
         serializer = get_serializer_for_model(instance.assigned_object_type.model_class())
-        context = {"request": self.context["request"]}
+        context = {'request': self.context['request']}
         return serializer(instance.assigned_object, context=context).data

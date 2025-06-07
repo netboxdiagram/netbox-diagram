@@ -5,8 +5,8 @@ from netbox_diagram.filtersets import DiagramAssociationFilterSet, DiagramFilter
 from netbox_diagram.models import Diagram, DiagramAssociation
 
 __all__ = (
-    "DiagramViewSet",
-    "DiagramAssociationViewSet",
+    'DiagramViewSet',
+    'DiagramAssociationViewSet',
 )
 
 

@@ -13,10 +13,10 @@ from netbox_diagram.utils.diagram import compute_diagram_data
 @receiver([post_save, post_delete], sender=DiagramAssociation)
 def update_diagram_on_association_change(sender, instance, **kwargs):
     if instance.diagram:
-        queue = get_queue("low")
+        queue = get_queue('low')
         queue.enqueue_job(
             queue.create_job(
-                func="netbox_diagram.worker.updatecache",
+                func='netbox_diagram.worker.updatecache',
                 args=[instance.diagram.id],
                 timeout=9000,
             )
@@ -29,7 +29,7 @@ def update_diagram_on_cable_change(sender, instance, **kwargs):
     content_types = []
 
     for t in instance.terminations.all():
-        term = getattr(t, "termination", None)
+        term = getattr(t, 'termination', None)
         if term:
             termination_ids.append(term.id)
             content_types.append(ContentType.objects.get_for_model(term))
@@ -38,12 +38,12 @@ def update_diagram_on_cable_change(sender, instance, **kwargs):
     for ct, id_ in zip(content_types, termination_ids):
         filters |= Q(assigned_object_type=ct, assigned_object_id=id_)
 
-    diagram_ids = DiagramAssociation.objects.filter(filters).values_list("diagram_id", flat=True).distinct()
+    diagram_ids = DiagramAssociation.objects.filter(filters).values_list('diagram_id', flat=True).distinct()
     for diagram_id in diagram_ids:
-        queue = get_queue("low")
+        queue = get_queue('low')
         queue.enqueue_job(
             queue.create_job(
-                func="netbox_diagram.worker.updatecache",
+                func='netbox_diagram.worker.updatecache',
                 args=[diagram_id],
                 timeout=9000,
             )
@@ -52,7 +52,7 @@ def update_diagram_on_cable_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=CircuitTermination)
 def update_diagram_on_circuit_termination_change(sender, instance, **kwargs):
-    assigned_object = getattr(instance.termination, "device", None)
+    assigned_object = getattr(instance.termination, 'device', None)
     if assigned_object:
         associations = DiagramAssociation.objects.filter(
             assigned_object_id=assigned_object.id,

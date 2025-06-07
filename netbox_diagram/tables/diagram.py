@@ -4,8 +4,8 @@ from netbox.tables import NetBoxTable
 from netbox_diagram.models import Diagram, DiagramAssociation
 
 _all__ = (
-    "DiagramTable",
-    "DiagramAssociationTable",
+    'DiagramTable',
+    'DiagramAssociationTable',
 )
 
 
@@ -15,16 +15,16 @@ class DiagramTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = Diagram
         fields = (
-            "pk",
-            "name",
-            "description",
-            "created",
-            "last_updated",
+            'pk',
+            'name',
+            'description',
+            'created',
+            'last_updated',
         )
         default_columns = (
-            "pk",
-            "name",
-            "description",
+            'pk',
+            'name',
+            'description',
         )
 
 
@@ -35,19 +35,19 @@ class DiagramAssociationTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = DiagramAssociation
         fields = (
-            "pk",
-            "diagram",
-            "assigned_object_type",
-            "assigned_object",
-            "coord_x",
-            "coord_y",
-            "created",
-            "last_updated",
+            'pk',
+            'diagram',
+            'assigned_object_type',
+            'assigned_object',
+            'coord_x',
+            'coord_y',
+            'created',
+            'last_updated',
         )
         default_columns = (
-            "pk",
-            "diagram",
-            "assigned_object_type",
-            "assigned_object",
-            "description",
+            'pk',
+            'diagram',
+            'assigned_object_type',
+            'assigned_object',
+            'description',
         )

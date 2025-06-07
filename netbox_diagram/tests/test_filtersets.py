@@ -14,9 +14,9 @@ class DiagramTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         diagrams = (
-            Diagram(name="Diagram 1"),
-            Diagram(name="Diagram 2"),
-            Diagram(name="Diagram 3"),
+            Diagram(name='Diagram 1'),
+            Diagram(name='Diagram 2'),
+            Diagram(name='Diagram 3'),
         )
         Diagram.objects.bulk_create(diagrams)
 

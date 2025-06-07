@@ -32,6 +32,7 @@ include = ["netbox_diagram*"]
 exclude = [
     "netbox_diagram/migrations",
 ]
+line-length = 220
 
 [tool.ruff.lint]
 extend-select = ["E4", "E7", "E9", "F", "W", "C", "I"]

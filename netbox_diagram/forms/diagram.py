@@ -9,34 +9,34 @@ from utilities.forms.rendering import FieldSet, TabbedGroups
 from netbox_diagram.models import Diagram, DiagramAssociation
 
 _all_ = (
-    "DiagramForm",
-    "DiagramBulkEditForm",
-    "DiagramFilterForm",
-    "DiagramAssociationForm",
-    "DiagramAssociationBulkEditForm",
-    "DiagramAssociationFilterForm",
+    'DiagramForm',
+    'DiagramBulkEditForm',
+    'DiagramFilterForm',
+    'DiagramAssociationForm',
+    'DiagramAssociationBulkEditForm',
+    'DiagramAssociationFilterForm',
 )
 
 
 class DiagramForm(NetBoxModelForm):
     class Meta:
         model = Diagram
-        fields = ("name", "description")
+        fields = ('name', 'description')
 
 
 class DiagramBulkEditForm(NetBoxModelBulkEditForm):
     model = Diagram
-    description = forms.CharField(label=_("Description"), max_length=200, required=False)
+    description = forms.CharField(label=_('Description'), max_length=200, required=False)
 
-    fieldsets = (FieldSet("description"),)
-    nullable_fields = ("description",)
+    fieldsets = (FieldSet('description'),)
+    nullable_fields = ('description',)
 
 
 class DiagramFilterForm(NetBoxModelFilterSetForm):
     model = Diagram
     fieldsets = (
-        FieldSet("q", "filter_id"),
-        FieldSet("name", "description", name=_("Diagrams")),
+        FieldSet('q', 'filter_id'),
+        FieldSet('name', 'description', name=_('Diagrams')),
     )
 
     tag = TagFilterField(model)
@@ -52,48 +52,48 @@ class DiagramAssociationForm(NetBoxModelForm):
         queryset=Device.objects.all(),
         required=False,
         selector=True,
-        label=_("Device"),
+        label=_('Device'),
         # Todo: filter devices that are already associated?
     )
     circuit = DynamicModelChoiceField(
         queryset=Circuit.objects.all(),
         required=False,
         selector=True,
-        label=_("Circuit"),
+        label=_('Circuit'),
         # Todo: filter devices that are already associated?
     )
-    coord_x = forms.IntegerField(required=False, label=_("X coordinate"))
-    coord_y = forms.IntegerField(required=False, label=_("Y coordinate"))
+    coord_x = forms.IntegerField(required=False, label=_('X coordinate'))
+    coord_y = forms.IntegerField(required=False, label=_('Y coordinate'))
 
     fieldsets = (
-        FieldSet("diagram", "coord_x", "coord_y", name=_("Generic")),
+        FieldSet('diagram', 'coord_x', 'coord_y', name=_('Generic')),
         FieldSet(
             TabbedGroups(
-                FieldSet("device", name=_("Device")),
-                FieldSet("circuit", name=_("Circuit")),
+                FieldSet('device', name=_('Device')),
+                FieldSet('circuit', name=_('Circuit')),
             ),
-            name=_("Assignment"),
+            name=_('Assignment'),
         ),
     )
 
     class Meta:
         model = DiagramAssociation
         fields = (
-            "diagram",
-            "device",
-            "circuit",
-            "coord_x",
-            "coord_y",
+            'diagram',
+            'device',
+            'circuit',
+            'coord_x',
+            'coord_y',
         )
 
     def __init__(self, *args, **kwargs):
         # Initialize helper selectors
-        instance = kwargs.get("instance")
-        initial = kwargs.get("initial", {}).copy()
+        instance = kwargs.get('instance')
+        initial = kwargs.get('initial', {}).copy()
         if instance:
             type_to_field = {
-                Device: "device",
-                Circuit: "circuit",
+                Device: 'device',
+                Circuit: 'circuit',
             }
 
             for obj_type, field_name in type_to_field.items():
@@ -101,7 +101,7 @@ class DiagramAssociationForm(NetBoxModelForm):
                     initial[field_name] = instance.assigned_object
                     break
 
-        kwargs["initial"] = initial
+        kwargs['initial'] = initial
 
         super().__init__(*args, **kwargs)
 
@@ -109,11 +109,9 @@ class DiagramAssociationForm(NetBoxModelForm):
         super().clean()
 
         # Handle object assignment
-        selected_objects = [field for field in ("device", "circuit") if self.cleaned_data[field]]
+        selected_objects = [field for field in ('device', 'circuit') if self.cleaned_data[field]]
         if len(selected_objects) > 1:
-            raise forms.ValidationError(
-                {selected_objects[1]: _("An IP address can only be assigned to a single object.")}
-            )
+            raise forms.ValidationError({selected_objects[1]: _('An IP address can only be assigned to a single object.')})
         elif selected_objects:
             self.instance.assigned_object = self.cleaned_data[selected_objects[0]]
         else:
@@ -123,24 +121,24 @@ class DiagramAssociationForm(NetBoxModelForm):
 class DiagramAssociationBulkEditForm(NetBoxModelBulkEditForm):
     model = DiagramAssociation
 
-    coord_x = forms.IntegerField(required=False, label=_("X coordinate"))
-    coord_y = forms.IntegerField(required=False, label=_("Y coordinate"))
+    coord_x = forms.IntegerField(required=False, label=_('X coordinate'))
+    coord_y = forms.IntegerField(required=False, label=_('Y coordinate'))
 
-    fieldsets = (FieldSet("coord_x", "coord_y", name=_("Generic")),)
+    fieldsets = (FieldSet('coord_x', 'coord_y', name=_('Generic')),)
 
     class Meta:
         model = DiagramAssociation
         fields = (
-            "coord_x",
-            "coord_y",
+            'coord_x',
+            'coord_y',
         )
 
     def __init__(self, *args, **kwargs):
         # Initialize helper selectors
-        instance = kwargs.get("instance")
-        initial = kwargs.get("initial", {}).copy()
+        instance = kwargs.get('instance')
+        initial = kwargs.get('initial', {}).copy()
 
-        kwargs["initial"] = initial
+        kwargs['initial'] = initial
 
         super().__init__(*args, **kwargs)
 
@@ -148,8 +146,8 @@ class DiagramAssociationBulkEditForm(NetBoxModelBulkEditForm):
 class DiagramAssociationFilterForm(NetBoxModelFilterSetForm):
     model = DiagramAssociation
     fieldsets = (
-        FieldSet("q", "filter_id"),
-        FieldSet("diagram", name=_("Diagrams")),
+        FieldSet('q', 'filter_id'),
+        FieldSet('diagram', name=_('Diagrams')),
     )
 
     tag = TagFilterField(model)

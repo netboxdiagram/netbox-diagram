@@ -21,23 +21,23 @@ from netbox_diagram.models import Diagram, DiagramAssociation
 from netbox_diagram.tables import DiagramAssociationTable, DiagramTable
 
 _all__ = (
-    "DiagramListView",
-    "DiagramView",
-    "DiagramEditView",
-    "DiagramBulkEditView",
-    "DiagramDeleteView",
-    "DiagramBulkDeleteView",
-    "DiagramAssociationListView",
-    "DiagramAssociationView",
-    "DiagramAssociationEditView",
-    "DiagramAssociationBulkEditView",
-    "DiagramAssociationDeleteView",
-    "DiagramAssociationBulkDeleteView",
+    'DiagramListView',
+    'DiagramView',
+    'DiagramEditView',
+    'DiagramBulkEditView',
+    'DiagramDeleteView',
+    'DiagramBulkDeleteView',
+    'DiagramAssociationListView',
+    'DiagramAssociationView',
+    'DiagramAssociationEditView',
+    'DiagramAssociationBulkEditView',
+    'DiagramAssociationDeleteView',
+    'DiagramAssociationBulkDeleteView',
 )
 
 
 # Diagram
-@register_model_view(Diagram, name="list")
+@register_model_view(Diagram, name='list')
 class DiagramListView(ObjectListView):
     """
     List view of all Diagram objects
@@ -58,7 +58,7 @@ class DiagramView(ObjectView):
     queryset = Diagram.objects.all()
 
 
-@register_model_view(Diagram, "edit")
+@register_model_view(Diagram, 'edit')
 class DiagramEditView(ObjectEditView):
     """
     Diagram Object Edit view
@@ -68,7 +68,7 @@ class DiagramEditView(ObjectEditView):
     form = DiagramForm
 
 
-@register_model_view(Diagram, "bulk_edit")
+@register_model_view(Diagram, 'bulk_edit')
 class DiagramBulkEditView(BulkEditView):
     """
     Diagram Object Bulk Edit view
@@ -80,12 +80,12 @@ class DiagramBulkEditView(BulkEditView):
     form = DiagramBulkEditForm
 
 
-@register_model_view(Diagram, "delete")
+@register_model_view(Diagram, 'delete')
 class DiagramDeleteView(ObjectDeleteView):
     queryset = Diagram.objects.all()
 
 
-@register_model_view(Diagram, "bulk_delete")
+@register_model_view(Diagram, 'bulk_delete')
 class DiagramBulkDeleteView(BulkDeleteView):
     """
     Diagram Object Bulk Delete view
@@ -97,7 +97,7 @@ class DiagramBulkDeleteView(BulkDeleteView):
 
 
 # DiagramAssociation
-@register_model_view(DiagramAssociation, name="list")
+@register_model_view(DiagramAssociation, name='list')
 class DiagramAssociationListView(ObjectListView):
     """
     List view of all DiagramAssociation objects
@@ -118,7 +118,7 @@ class DiagramAssociationView(ObjectView):
     queryset = DiagramAssociation.objects.all()
 
 
-@register_model_view(DiagramAssociation, "edit")
+@register_model_view(DiagramAssociation, 'edit')
 class DiagramAssociationEditView(ObjectEditView):
     """
     DiagramAssociation Object Edit view
@@ -128,21 +128,21 @@ class DiagramAssociationEditView(ObjectEditView):
     form = DiagramAssociationForm
 
     def alter_object(self, obj, request, url_args, url_kwargs):
-        if "device" in request.GET:
+        if 'device' in request.GET:
             try:
-                obj.assigned_object = Device.objects.get(pk=request.GET["device"])
+                obj.assigned_object = Device.objects.get(pk=request.GET['device'])
             except (ValueError, Device.DoesNotExist):
                 pass
-        elif "circuit" in request.GET:
+        elif 'circuit' in request.GET:
             try:
-                obj.assigned_object = Circuit.objects.get(pk=request.GET["circuit"])
+                obj.assigned_object = Circuit.objects.get(pk=request.GET['circuit'])
             except (ValueError, Circuit.DoesNotExist):
                 pass
 
         return obj
 
 
-@register_model_view(DiagramAssociation, "bulk_edit")
+@register_model_view(DiagramAssociation, 'bulk_edit')
 class DiagramAssociationBulkEditView(BulkEditView):
     """
     DiagramAssociation Object Bulk Edit view
@@ -154,26 +154,26 @@ class DiagramAssociationBulkEditView(BulkEditView):
     form = DiagramAssociationBulkEditForm
 
     def alter_object(self, obj, request, url_args, url_kwargs):
-        if "device" in request.GET:
+        if 'device' in request.GET:
             try:
-                obj.assigned_object = Device.objects.get(pk=request.GET["device"])
+                obj.assigned_object = Device.objects.get(pk=request.GET['device'])
             except (ValueError, Device.DoesNotExist):
                 pass
-        elif "circuit" in request.GET:
+        elif 'circuit' in request.GET:
             try:
-                obj.assigned_object = Circuit.objects.get(pk=request.GET["circuit"])
+                obj.assigned_object = Circuit.objects.get(pk=request.GET['circuit'])
             except (ValueError, Circuit.DoesNotExist):
                 pass
 
         return obj
 
 
-@register_model_view(DiagramAssociation, "delete")
+@register_model_view(DiagramAssociation, 'delete')
 class DiagramAssociationDeleteView(ObjectDeleteView):
     queryset = DiagramAssociation.objects.all()
 
 
-@register_model_view(DiagramAssociation, "bulk_delete")
+@register_model_view(DiagramAssociation, 'bulk_delete')
 class DiagramAssociationBulkDeleteView(BulkDeleteView):
     """
     DiagramAssociation Object Bulk Delete view

@@ -9,36 +9,36 @@ from netbox_diagram.models import Diagram, DiagramAssociation
 
 class AppTest(APITestCase):
     def test_root(self):
-        url = reverse("plugins-api:netbox_diagram-api:api-root")
-        response = self.client.get(f"{url}?format=api", **self.header)
+        url = reverse('plugins-api:netbox_diagram-api:api-root')
+        response = self.client.get(f'{url}?format=api', **self.header)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class DiagramTest(APIViewTestCases.APIViewTestCase):
     model = Diagram
-    view_namespace = "plugins-api:netbox_diagram"
-    brief_fields = ["description", "display", "id", "name", "url"]
+    view_namespace = 'plugins-api:netbox_diagram'
+    brief_fields = ['description', 'display', 'id', 'name', 'url']
 
     create_data = [
         {
-            "name": "Diagram 4",
+            'name': 'Diagram 4',
         },
         {
-            "name": "Diagram 5",
+            'name': 'Diagram 5',
         },
         {
-            "name": "Diagram 6",
+            'name': 'Diagram 6',
         },
     ]
-    bulk_update_data = {"description": "New description"}
+    bulk_update_data = {'description': 'New description'}
 
     @classmethod
     def setUpTestData(cls):
         diagrams = [
-            Diagram(name="Diagram 1"),
-            Diagram(name="Diagram 2"),
-            Diagram(name="Diagram 3"),
+            Diagram(name='Diagram 1'),
+            Diagram(name='Diagram 2'),
+            Diagram(name='Diagram 3'),
         ]
         Diagram.objects.bulk_create(diagrams)
 
@@ -57,20 +57,20 @@ class DiagramTest(APIViewTestCases.APIViewTestCase):
 
 class DiagramAssociationTest(APIViewTestCases.APIViewTestCase):
     model = DiagramAssociation
-    view_namespace = "plugins-api:netbox_diagram"
+    view_namespace = 'plugins-api:netbox_diagram'
     brief_fields = [
-        "assigned_object",
-        "assigned_object_id",
-        "assigned_object_type",
-        "coord_x",
-        "coord_y",
-        "diagram",
-        "display",
-        "id",
-        "url",
+        'assigned_object',
+        'assigned_object_id',
+        'assigned_object_type',
+        'coord_x',
+        'coord_y',
+        'diagram',
+        'display',
+        'id',
+        'url',
     ]
 
-    bulk_update_data = {"description": "New description"}
+    bulk_update_data = {'description': 'New description'}
 
     @classmethod
     def setUpTestData(cls):
@@ -78,12 +78,12 @@ class DiagramAssociationTest(APIViewTestCases.APIViewTestCase):
 
         pre_created_diagrams = Diagram.objects.bulk_create(
             [
-                Diagram(name="Precreated Diagram 1"),
-                Diagram(name="Precreated Diagram 2"),
-                Diagram(name="Precreated Diagram 3"),
+                Diagram(name='Precreated Diagram 1'),
+                Diagram(name='Precreated Diagram 2'),
+                Diagram(name='Precreated Diagram 3'),
             ]
         )
-        pre_created_devices = [create_test_device(name=f"Precreated Device {i}") for i in range(1, 4)]
+        pre_created_devices = [create_test_device(name=f'Precreated Device {i}') for i in range(1, 4)]
         device_ct = ContentType.objects.get_for_model(Device)
 
         for i in range(3):
@@ -96,23 +96,23 @@ class DiagramAssociationTest(APIViewTestCases.APIViewTestCase):
         cls.create_data = []
         new_diagrams = Diagram.objects.bulk_create(
             [
-                Diagram(name="Diagram 4"),
-                Diagram(name="Diagram 5"),
-                Diagram(name="Diagram 6"),
+                Diagram(name='Diagram 4'),
+                Diagram(name='Diagram 5'),
+                Diagram(name='Diagram 6'),
             ]
         )
-        new_devices = [create_test_device(name=f"Device {i}") for i in range(4, 7)]
+        new_devices = [create_test_device(name=f'Device {i}') for i in range(4, 7)]
 
         for i in range(3):
             cls.create_data.append(
                 {
-                    "diagram": new_diagrams[i].id,
-                    "assigned_object_type": f"{device_ct.app_label}.{device_ct.model}",
-                    "assigned_object_id": new_devices[i].id,
+                    'diagram': new_diagrams[i].id,
+                    'assigned_object_type': f'{device_ct.app_label}.{device_ct.model}',
+                    'assigned_object_id': new_devices[i].id,
                 }
             )
 
-        cls.bulk_update_data = {"coord_y": 80}
+        cls.bulk_update_data = {'coord_y': 80}
 
     def test_graphql_get_object(self):
         """Not implemented"""

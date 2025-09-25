@@ -28,6 +28,12 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ["netbox_diagram*"]
 
+[tool.setuptools.package-data]
+"netbox_diagram" = [
+    "templates/**/*",
+    "static/**/*"
+]
+
 [tool.ruff]
 exclude = [
     "netbox_diagram/migrations",

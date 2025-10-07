@@ -19,6 +19,8 @@ class Diagram(NetBoxModel):
     class Meta:
         verbose_name = 'Diagram'
         verbose_name_plural = 'Diagrams'
+        ordering = ('-created',)
+
         constraints = [
             models.UniqueConstraint(
                 fields=['name'],
@@ -54,6 +56,7 @@ class DiagramAssociation(NetBoxModel):
     class Meta:
         verbose_name = 'Diagram Association'
         verbose_name_plural = 'Diagram Assocations'
+        ordering = ('-created',)
 
         constraints = [
             models.UniqueConstraint(

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox_diagram"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="Netbox Diagram", email="netboxdiagram@gmail.com" },
 ]

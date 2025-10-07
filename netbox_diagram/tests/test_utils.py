@@ -46,29 +46,8 @@ class UtilsTestCase(TestCase):
         diagram.cached_data = compute_diagram_data(diagram.id)
         # Verify the data
         expected_json = {
-            'nodes': [
-                {
-                    'name': device_1.name,
-                    'association_id': diagramassociation_1.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-                {
-                    'name': device_2.name,
-                    'association_id': diagramassociation_2.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-            ],
-            'edges': [
-                {
-                    'source': device_1.name,
-                    'target': device_2.name,
-                    'description': f'{device_1.name}:{interfaces[0].name} ↔ {device_2.name}:{interfaces[1].name}',
-                }
-            ],
+            'nodes': [{'name': 'Device 2', 'association_id': 19, 'type': 'device', 'x': 20, 'y': 20}, {'name': 'Device 1', 'association_id': 18, 'type': 'device', 'x': 20, 'y': 20}],
+            'edges': [{'source': 'Device 1', 'target': 'Device 2', 'description': 'Device 1:eth0 ↔ Device 2:eth0'}],
         }
 
         self.assertEqual(diagram.cached_data, expected_json)
@@ -114,29 +93,8 @@ class UtilsTestCase(TestCase):
         diagram.cached_data = compute_diagram_data(diagram.id)
         # Verify the data from the first run
         expected_json = {
-            'nodes': [
-                {
-                    'name': device_1.name,
-                    'association_id': diagramassociation_1.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-                {
-                    'name': device_2.name,
-                    'association_id': diagramassociation_2.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-            ],
-            'edges': [
-                {
-                    'source': device_1.name,
-                    'target': device_2.name,
-                    'description': f'{device_1.name}:{interfaces[0].name} ↔ {device_2.name}:{interfaces[1].name}',
-                }
-            ],
+            'nodes': [{'name': 'Device 2', 'association_id': 14, 'type': 'device', 'x': 20, 'y': 20}, {'name': 'Device 1', 'association_id': 13, 'type': 'device', 'x': 20, 'y': 20}],
+            'edges': [{'source': 'Device 1', 'target': 'Device 2', 'description': 'Device 1:eth0 ↔ Device 2:eth0'}],
         }
         self.assertEqual(diagram.cached_data, expected_json)
 
@@ -154,8 +112,8 @@ class UtilsTestCase(TestCase):
         expected_json = {
             'nodes': [
                 {
-                    'name': device_1.name,
-                    'association_id': diagramassociation_1.id,
+                    'name': device_3.name,
+                    'association_id': diagramassociation_3.id,
                     'type': 'device',
                     'x': 20,
                     'y': 20,
@@ -168,8 +126,8 @@ class UtilsTestCase(TestCase):
                     'y': 20,
                 },
                 {
-                    'name': device_3.name,
-                    'association_id': diagramassociation_3.id,
+                    'name': device_1.name,
+                    'association_id': diagramassociation_1.id,
                     'type': 'device',
                     'x': 20,
                     'y': 20,
@@ -192,40 +150,11 @@ class UtilsTestCase(TestCase):
         diagram.cached_data = compute_diagram_data(diagram.id)
         expected_json = {
             'nodes': [
-                {
-                    'name': device_1.name,
-                    'association_id': diagramassociation_1.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-                {
-                    'name': device_2.name,
-                    'association_id': diagramassociation_2.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-                {
-                    'name': device_3.name,
-                    'association_id': diagramassociation_3.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
+                {'name': 'Device 3', 'association_id': 15, 'type': 'device', 'x': 20, 'y': 20},
+                {'name': 'Device 2', 'association_id': 14, 'type': 'device', 'x': 20, 'y': 20},
+                {'name': 'Device 1', 'association_id': 13, 'type': 'device', 'x': 20, 'y': 20},
             ],
-            'edges': [
-                {
-                    'source': device_1.name,
-                    'target': device_2.name,
-                    'description': f'{device_1.name}:{interfaces[0].name} ↔ {device_2.name}:{interfaces[1].name}',
-                },
-                {
-                    'source': device_2.name,
-                    'target': device_3.name,
-                    'description': f'{device_2.name}:{interfaces[2].name} ↔ {device_3.name}:{interfaces[3].name}',
-                },
-            ],
+            'edges': [{'source': 'Device 1', 'target': 'Device 2', 'description': 'Device 1:eth0 ↔ Device 2:eth0'}, {'source': 'Device 2', 'target': 'Device 3', 'description': 'Device 2:eth1 ↔ Device 3:eth1'}],
         }
         self.assertEqual(diagram.cached_data, expected_json)
 
@@ -277,40 +206,10 @@ class UtilsTestCase(TestCase):
         # Verify the data
         expected_json = {
             'nodes': [
-                {
-                    'name': device_1.name,
-                    'association_id': diagramassociation_1.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-                {
-                    'name': device_2.name,
-                    'association_id': diagramassociation_2.id,
-                    'type': 'device',
-                    'x': 20,
-                    'y': 20,
-                },
-                {
-                    'name': circuit1.cid,
-                    'association_id': None,
-                    'x': 70,
-                    'y': 70,
-                    'type': 'circuit',
-                },
+                {'name': 'Device 2', 'association_id': 17, 'type': 'device', 'x': 20, 'y': 20},
+                {'name': 'Device 1', 'association_id': 16, 'type': 'device', 'x': 20, 'y': 20},
+                {'name': '1', 'association_id': None, 'x': 70, 'y': 70, 'type': 'circuit'},
             ],
-            'edges': [
-                {
-                    'source': device_1.name,
-                    'target': '1',
-                    'description': f'{device_1.name}:{interfaces[0].name} ↔ Circuit {circuit1.cid}',
-                },
-                {
-                    'source': device_2.name,
-                    'target': '1',
-                    'description': f'{device_2.name}:{interfaces[1].name} ↔ Circuit {circuit1.cid}',
-                },
-            ],
+            'edges': [{'source': 'Device 1', 'target': '1', 'description': 'Device 1:eth0 ↔ Circuit 1'}, {'source': 'Device 2', 'target': '1', 'description': 'Device 2:eth0 ↔ Circuit 1'}],
         }
-
         self.assertEqual(diagram.cached_data, expected_json)

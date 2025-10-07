@@ -2,10 +2,10 @@
 
 **Automatically generated, up-to-date network diagrams from NetBox**
 
-![CI Status](https://github.com/netboxdiagram/netbox_diagram/actions/workflows/ci.yaml/badge.svg)
+![CI Status](https://github.com/netboxdiagram/netbox_diagram/actions/workflows/ci.yml/badge.svg)
 ![Test Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/netboxdiagram/6a925b197e40e7e27cd577a4abd5b586/raw/a52ac8a432242f3bd7af5f3b061e67571c479b96/cov.json)
 ![Supported Python Version](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![Supported NetBox Versions](https://img.shields.io/badge/NetBox-4.1%7C4.2%7C4.3-blue.svg)
+![Supported NetBox Versions](https://img.shields.io/badge/NetBox-4.x-blue.svg)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## 📑 Table of Contents
